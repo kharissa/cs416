@@ -3,13 +3,27 @@
   <head>
     <title>Hawaii PPP Loan Data</title>
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-array@3"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="container">
       <div class="navigation">
         <h2>Hawaii PPP Loan Data</h2>
-
+        <div class="description">
+          <p>
+            As part of the 2020 CARES Act, the Paycheck Protection Program (PPP)
+            were government-backed loans made by banks to businesses during the
+            COVID-19 crisis. This
+            <a
+              href="https://publicaccountability.org/datasets/358/ppp-loans/"
+              target="_blank"
+              >dataset</a
+            >
+            specifically looks at loans approved between April - August 2020 to
+            businesses in Hawaii.
+          </p>
+        </div>
         <div class="pagination">
           <a href="index.html">&laquo;</a>
           <a href="index.html">1</a>
@@ -19,38 +33,113 @@
         </div>
       </div>
       <div id="content">
-        <svg id="bar-js"></svg>
+        <h4>Top 30 Business Categories by Average Loan Amount</h4>
       </div>
     </div>
     <script>
-      var dataset = [80, 100, 56, 72, 85, 200, 134];
+      const barChart = (selector, data) => {
+        const barHeight = 13;
+        const width = 1000;
+        const height = data.length * (barHeight * 2);
+        const margin = { top: 0, right: 0, bottom: 1, left: 500 };
+        const container = d3.select(selector);
 
-      var svgWidth = 500,
-        svgHeight = 300,
-        barPadding = 5;
-      var barWidth = svgWidth / dataset.length;
+        const chart = container
+          .append("svg")
+          .style("width", "100%")
+          .attr("viewBox", `0 0 ${width} ${height}`);
 
-      var svg = d3
-        .select("svg")
-        .attr("width", svgWidth)
-        .attr("height", svgHeight);
+        const xScale = d3
+          .scaleLinear()
+          .range([0, width - margin.left - 150])
+          .domain([0, d3.max(data, (d) => d[1])]);
 
-      var barChart = svg
-        .selectAll("rect")
-        .data(dataset)
-        .enter()
-        .append("rect")
-        .attr("y", function (d) {
-          return svgHeight - d;
-        })
-        .attr("height", function (d) {
-          return d;
-        })
-        .attr("width", barWidth - barPadding)
-        .attr("transform", function (d, i) {
-          var translate = [barWidth * i, 0];
-          return "translate(" + translate + ")";
+        const yScale = d3
+          .scaleBand()
+          .range([0, height - margin.top - margin.bottom])
+          .domain(data.map((d) => d[0]));
+
+        var color = d3.scaleOrdinal(d3.schemeCategory20c);
+        
+        var tooltip = d3
+          .select("#content")
+          .append("div")
+          .attr("class", "tooltip");
+        tooltip.append("div").attr("class", "percent");
+
+        const yAxis = chart
+          .append("g")
+          .call(d3.axisLeft(yScale))
+          .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+        const bar = chart
+          .selectAll(".bar")
+          .data(data)
+          .enter()
+          .append("rect")
+          .attr("class", "bar")
+          .attr("fill", (d) => color(d[0]))
+          .attr("height", barHeight)
+          .attr("width", (d) => xScale(d[1]))
+          .attr("x", margin.left + 1)
+          .attr("y", (d) => yScale(d[0]) + barHeight / 2);
+
+        bar.on("mouseover", function (d) {
+          var total_avg = data[data.length - 1][1];
+          var percentage = (d[1] / total_avg) * 100;
+          tooltip
+            .select(".percent")
+            .html(`+${percentage.toFixed(2)}% over total average`);
+          tooltip.style("display", "block");
         });
+
+        bar.on("mouseout", function () {
+          tooltip.style("display", "none");
+        });
+
+        bar.on("mousemove", function (d) {
+          tooltip
+            .style("top", d3.event.layerY + 10 + "px")
+            .style("left", d3.event.layerX + 10 + "px");
+        });
+
+        chart
+          .selectAll(".label")
+          .data(data)
+          .enter()
+          .append("text")
+          .attr("class", "label")
+          .attr("alignment-baseline", "middle")
+          .attr("x", (d) => xScale(d[1]) + margin.left + 5)
+          .attr("y", (d) => yScale(d[0]) + barHeight)
+          .style("font-size", "10px")
+          .style("font-weight", "bold")
+          .text((d) =>
+            d[1].toLocaleString("en-US", {
+              style: "currency",
+              currency: "USD",
+              maximumFractionDigits: 0,
+            })
+          );
+
+        yAxis.selectAll("text").style("font-size", "10px");
+      };
+
+      d3.csv("https://kharissa.github.io/cs416/data.csv", function (csvData) {
+        let sumData = d3.rollups(
+          csvData,
+          (v) => d3.mean(v, (d) => d.LoanAmount),
+          (d) => d.NAICSCodeDefinition
+        );
+        let sortedData = sumData.sort(function (a, b) {
+          return b[1] - a[1];
+        });
+        let data = sortedData.slice(0, 30);
+        const remainingSum =
+          sortedData.reduce((sum, li) => sum + li[1], 0) / sortedData.length;
+        data.push(["All Categories", remainingSum]);
+        barChart("#content", data);
+      });
     </script>
   </body>
 </html>
