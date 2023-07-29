@@ -42,23 +42,18 @@
     <script>
       const chart = (selector, data) => {
         const container = d3.select(selector);
-
-        // Specify the chart’s dimensions.
-
         const marginTop = 25;
-        const marginRight = 25;
-        const marginBottom = 25;
-        const marginLeft = 25;
+        const marginRight = 70;
+        const marginBottom = 100;
+        const marginLeft = 70;
         const width = 900 - marginLeft - marginRight;
         const height = 600 - marginTop - marginBottom;
 
-        // Define the horizontal scale.
         const x = d3
           .scaleLinear()
           .domain([0, 150000])
           .range([marginLeft, width - marginRight]);
 
-        // Define the vertical scale.
         const y = d3
           .scaleLinear()
           .domain([0, 30])
@@ -75,7 +70,7 @@
         tooltip.append("div").attr("class", "jobs");
         tooltip.append("div").attr("class", "amount");
         tooltip.append("div").attr("class", "count");
-        // Create the container SVG.
+
         const svg = container
           .append("svg")
           .attr("width", width + marginLeft + marginRight)
@@ -83,7 +78,6 @@
           .attr("viewBox", [0, 0, width, height])
           .attr("style", "max-width: 100%; height: auto;");
 
-        // Add the axes.
         svg
           .append("g")
           .attr("transform", `translate(0,${height - marginBottom})`)
@@ -94,7 +88,6 @@
           .attr("transform", `translate(${marginLeft},0)`)
           .call(d3.axisLeft(y));
 
-        // Add X axis label:
         svg
           .append("text")
           .attr("text-anchor", "end")
@@ -102,7 +95,6 @@
           .attr("y", height + marginTop + 20)
           .text("Average Loan Amount");
 
-        // Y axis label:
         svg
           .append("text")
           .attr("text-anchor", "end")
@@ -111,7 +103,6 @@
           .attr("x", -marginTop)
           .text("Average Jobs Reported");
 
-        // Append a circle for each data point.
         svg
           .append("g")
           .selectAll("circle")

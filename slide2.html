@@ -125,6 +125,39 @@
           );
 
         yAxis.selectAll("text").style("font-size", "10px");
+
+        const makeAnnotations = d3
+          .annotation()
+          .editMode(true)
+          .notePadding(15)
+          .type(
+            d3.annotationCustomType(d3.annotationLabel, {
+              className: "custom",
+              note: { align: "middle", lineType: "vertical" },
+            })
+          )
+          .annotations([
+            {
+              note: {
+                label:
+                  "Although few in number, manufacturing received the highest average loan amounts, with the highest on record almost +400% over average.",
+                title: "Manufacturing",
+              },
+              data: {
+                NAICSCodeDefinition:
+                  "All Other Basic Organic Chemical Manufacturing",
+              },
+              dy: 350,
+              dx: 50,
+              x: 810,
+              y: 10,
+            },
+          ]);
+
+        d3.select("svg")
+          .append("g")
+          .attr("class", "annotation-group")
+          .call(makeAnnotations);
       };
 
       d3.csv("https://kharissa.github.io/cs416/data.csv", function (csvData) {
