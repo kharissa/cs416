@@ -3,35 +3,8 @@
   <head>
     <title>PPP Loans for Businesses in Hawaii</title>
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="d3-annotation.min.js"></script>
     <link rel="stylesheet" href="style.css" />
-    <style>
-      rect {
-        cursor: pointer;
-        stroke-width: 2;
-      }
-      rect.disabled {
-        fill: transparent !important;
-      }
-      #chart {
-        margin: 0;
-        position: relative;
-        display: block;
-      }
-      .tooltip {
-        background: #eee;
-        box-shadow: 0 0 5px #999999;
-        color: #333;
-        display: none;
-        font-size: 16px;
-        left: 130px;
-        padding: 10px;
-        position: absolute;
-        text-align: center;
-        top: 95px;
-        width: 175px;
-        z-index: 10;
-      }
-    </style>
   </head>
   <body>
     <div class="container">
@@ -76,8 +49,8 @@
         const marginRight = 25;
         const marginBottom = 25;
         const marginLeft = 25;
-        const width = 800 - marginLeft - marginRight;
-        const height = 500 - marginTop - marginBottom;
+        const width = 900 - marginLeft - marginRight;
+        const height = 600 - marginTop - marginBottom;
 
         // Define the horizontal scale.
         const x = d3
@@ -155,18 +128,28 @@
           .on("mouseover", function (d) {
             var total_avg = data[data.length - 1][1].LoanAmount;
             var percentage = (d[1].LoanAmount / total_avg) * 100;
-            tooltip.select(".label").html(`${d[0]}`);
+            tooltip
+              .select(".label")
+              .style("font-weight", "bold")
+              .html(`${d[0]}`);
             tooltip
               .select(".jobs")
-              .html(`${d[1].JobsReported} jobs retained (avg)`);
-            tooltip.select(".amount").html(
-              `${d[1].LoanAmount.toLocaleString("en-US", {
-                style: "currency",
-                currency: "USD",
-                maximumFractionDigits: 0,
-              })} loan amount (avg)`
-            );
-            tooltip.select(".count").html(`${d[1].Count} loan records`);
+              .style("font-size", "13px")
+              .html(`${d[1].JobsReported.toFixed(0)} jobs retained (avg)`);
+            tooltip
+              .select(".amount")
+              .style("font-size", "13px")
+              .html(
+                `${d[1].LoanAmount.toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                  maximumFractionDigits: 0,
+                })} loan amount (avg)`
+              );
+            tooltip
+              .select(".count")
+              .style("font-size", "13px")
+              .html(`${d[1].Count} loan records`);
             tooltip.style("display", "block");
           })
           .on("mouseout", function () {
