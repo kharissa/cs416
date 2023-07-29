@@ -65,65 +65,84 @@
       </div>
     </div>
     <script>
-      const chart = (selector, data) => {
-        const container = d3.select(selector);
+      // set the dimensions and margins of the graph
+      var margin = { top: 10, right: 30, bottom: 30, left: 60 },
+        width = 460 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
 
-        // Specify the chart’s dimensions.
-        const width = 800;
-        const height = 300;
-        const marginTop = 25;
-        const marginRight = 25;
-        const marginBottom = 25;
-        const marginLeft = 25;
+      // append the svg object to the body of the page
+      var svg = d3
+        .select("#content")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        // Define the horizontal scale.
-        const x = d3
-          .scaleLinear()
-          .domain([0, 150000])
-          .range([marginLeft, width - marginRight]);
-
-        // Define the vertical scale.
-        const y = d3
-          .scaleLinear()
-          .domain([0, 510])
-          .range([height - marginBottom, marginTop]);
-
-        var color = d3.scaleOrdinal(d3.schemeCategory20c);
-
-        // Create the container SVG.
-        const svg = container
-          .append("svg")
-          .attr("width", width)
-          .attr("height", height)
-          .attr("viewBox", [0, 0, width, height])
-          .attr("style", "max-width: 100%; height: auto;");
-
-        // Add the axes.
+      //Read the data
+      d3.csv("https://kharissa.github.io/cs416/data.csv", function (data) {
+        // Add X axis
+        var x = d3.scaleLinear().domain([0, 150000]).range([0, width]);
         svg
           .append("g")
-          .attr("transform", `translate(0,${height - marginBottom})`)
+          .attr("transform", "translate(0," + height + ")")
           .call(d3.axisBottom(x));
 
-        svg
-          .append("g")
-          .attr("transform", `translate(${marginLeft},0)`)
-          .call(d3.axisLeft(y));
+        // Add Y axis
+        var y = d3.scaleLinear().domain([0, 510]).range([height, 0]);
+        svg.append("g").call(d3.axisLeft(y));
 
-        // Append a circle for each data point.
+        // Color scale: give me a specie name, I return a color
+        var color = d3.scaleOrdinal(d3.schemeCategory20c);
+
+        // Highlight the specie that is hovered
+        var highlight = function (d) {
+          selected_specie = d.NAICSCodeDefinition;
+
+          d3.selectAll(".dot")
+            .transition()
+            .duration(200)
+            .style("fill", "lightgrey")
+            .attr("r", 3);
+
+          d3.selectAll("." + selected_specie)
+            .transition()
+            .duration(200)
+            .style("fill", color(selected_specie))
+            .attr("r", 7);
+        };
+
+        // Highlight the specie that is hovered
+        var doNotHighlight = function () {
+          d3.selectAll(".dot")
+            .transition()
+            .duration(200)
+            .style("fill", "lightgrey")
+            .attr("r", 5);
+        };
+
+        // Add dots
         svg
           .append("g")
-          .selectAll("circle")
+          .selectAll("dot")
           .data(data)
           .enter()
           .append("circle")
-          .attr("cx", (d) => x(d.LoanAmount))
-          .attr("cy", (d) => y(d.JobsReported))
-          .attr("r", 1)
-          .attr("fill", (d) => color(d.NAICSCodeDefinition));
-      };
-
-      d3.csv("https://kharissa.github.io/cs416/data.csv", function (csvData) {
-        chart("#content", csvData);
+          .attr("class", function (d) {
+            return "dot " + d.NAICSCodeDefinition;
+          })
+          .attr("cx", function (d) {
+            return x(d.LoanAmount);
+          })
+          .attr("cy", function (d) {
+            return y(d.JobsReported);
+          })
+          .attr("r", 5)
+          .style("fill", function (d) {
+            return color(d.NAICSCodeDefinition);
+          })
+          .on("mouseover", highlight)
+          .on("mouseleave", doNotHighlight);
       });
     </script>
   </body>

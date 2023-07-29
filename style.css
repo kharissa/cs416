@@ -9,6 +9,10 @@ body {
   text-align: center;
 }
 
+.container {
+  padding: 50px 50px 150px 50px;
+}
+
 .header {
   padding: 20px;
 }
@@ -45,28 +49,28 @@ a.disabled {
 }
 
 rect {
-        cursor: pointer;
-        stroke-width: 2;
-      }
-      rect.disabled {
-        fill: transparent !important;
-      }
-      #chart {
-        margin: 0;
-        position: relative;
-        display: block;
-      }
-      .tooltip {
-        background: #eee;
-        box-shadow: 0 0 5px #999999;
-        color: #333;
-        display: none;
-        font-size: 16px;
-        left: 130px;
-        padding: 10px;
-        position: absolute;
-        text-align: center;
-        top: 95px;
-        width: 175px;
-        z-index: 10;
-      }
+  cursor: pointer;
+  stroke-width: 2;
+}
+rect.disabled {
+  fill: transparent !important;
+}
+#chart {
+  margin: 0;
+  position: relative;
+  display: block;
+}
+.tooltip {
+  background: #eee;
+  box-shadow: 0 0 5px #999999;
+  color: #333;
+  display: none;
+  font-size: 13px;
+  left: 130px;
+  padding: 10px;
+  position: absolute;
+  text-align: center;
+  top: 95px;
+  width: 200px;
+  z-index: 10;
+}

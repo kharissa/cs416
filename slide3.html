@@ -3,7 +3,6 @@
   <head>
     <title>Hawaii PPP Loan Data</title>
     <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3-array@3"></script>
     <link rel="stylesheet" href="style.css" />
     <style>
       rect {
@@ -61,7 +60,10 @@
         </div>
       </div>
       <div id="content">
-        <h4>Business Categories and Jobs Retention</h4>
+        <h4>
+          All Business Categories by Average Loan Amount and Average Jobs
+          Retained
+        </h4>
       </div>
     </div>
     <script>
@@ -69,12 +71,13 @@
         const container = d3.select(selector);
 
         // Specify the chart’s dimensions.
-        const width = 800;
-        const height = 300;
+
         const marginTop = 25;
         const marginRight = 25;
         const marginBottom = 25;
         const marginLeft = 25;
+        const width = 800 - marginLeft - marginRight;
+        const height = 500 - marginTop - marginBottom;
 
         // Define the horizontal scale.
         const x = d3
@@ -85,16 +88,25 @@
         // Define the vertical scale.
         const y = d3
           .scaleLinear()
-          .domain([0, 510])
+          .domain([0, 30])
           .range([height - marginBottom, marginTop]);
 
         var color = d3.scaleOrdinal(d3.schemeCategory20c);
 
+        var tooltip = d3
+          .select("#content")
+          .append("div")
+          .attr("class", "tooltip");
+
+        tooltip.append("div").attr("class", "label");
+        tooltip.append("div").attr("class", "jobs");
+        tooltip.append("div").attr("class", "amount");
+        tooltip.append("div").attr("class", "count");
         // Create the container SVG.
         const svg = container
           .append("svg")
-          .attr("width", width)
-          .attr("height", height)
+          .attr("width", width + marginLeft + marginRight)
+          .attr("height", height + marginTop + marginBottom)
           .attr("viewBox", [0, 0, width, height])
           .attr("style", "max-width: 100%; height: auto;");
 
@@ -109,6 +121,23 @@
           .attr("transform", `translate(${marginLeft},0)`)
           .call(d3.axisLeft(y));
 
+        // Add X axis label:
+        svg
+          .append("text")
+          .attr("text-anchor", "end")
+          .attr("x", width)
+          .attr("y", height + marginTop + 20)
+          .text("Average Loan Amount");
+
+        // Y axis label:
+        svg
+          .append("text")
+          .attr("text-anchor", "end")
+          .attr("transform", "rotate(-90)")
+          .attr("y", -marginLeft + 20)
+          .attr("x", -marginTop)
+          .text("Average Jobs Reported");
+
         // Append a circle for each data point.
         svg
           .append("g")
@@ -116,14 +145,71 @@
           .data(data)
           .enter()
           .append("circle")
-          .attr("cx", (d) => x(d.LoanAmount))
-          .attr("cy", (d) => y(d.JobsReported))
-          .attr("r", 1)
-          .attr("fill", (d) => color(d.NAICSCodeDefinition));
+          .attr("class", function (d) {
+            return `circle naics${[1].NAICSCode}`;
+          })
+          .attr("cx", (d) => x(d[1].LoanAmount))
+          .attr("cy", (d) => y(d[1].JobsReported))
+          .attr("r", 3)
+          .attr("fill", (d) => color(d[0]))
+          .on("mouseover", function (d) {
+            var total_avg = data[data.length - 1][1].LoanAmount;
+            var percentage = (d[1].LoanAmount / total_avg) * 100;
+            tooltip.select(".label").html(`${d[0]}`);
+            tooltip
+              .select(".jobs")
+              .html(`${d[1].JobsReported} jobs retained (avg)`);
+            tooltip.select(".amount").html(
+              `${d[1].LoanAmount.toLocaleString("en-US", {
+                style: "currency",
+                currency: "USD",
+                maximumFractionDigits: 0,
+              })} loan amount (avg)`
+            );
+            tooltip.select(".count").html(`${d[1].Count} loan records`);
+            tooltip.style("display", "block");
+          })
+          .on("mouseout", function () {
+            tooltip.style("display", "none");
+          })
+          .on("mousemove", function (d) {
+            tooltip
+              .style("top", d3.event.layerY + 10 + "px")
+              .style("left", d3.event.layerX + 10 + "px");
+          });
       };
 
       d3.csv("https://kharissa.github.io/cs416/data.csv", function (csvData) {
-        chart("#content", csvData);
+        let groupedArr = csvData.reduce((res, obj) => {
+          let codeExists = obj.NAICSCodeDefinition in res;
+          let amountExists = codeExists
+            ? "LoanAmount" in res[obj.NAICSCodeDefinition]
+            : false;
+          let countExists = codeExists
+            ? "Count" in res[obj.NAICSCodeDefinition]
+            : false;
+          let jobsExists = codeExists
+            ? "JobsReported" in res[obj.NAICSCodeDefinition]
+            : false;
+
+          res[obj.NAICSCodeDefinition] = {
+            LoanAmount:
+              (amountExists ? res[obj.NAICSCodeDefinition].LoanAmount : 0) +
+              parseInt(obj.LoanAmount),
+            Count: (countExists ? res[obj.NAICSCodeDefinition].Count : 0) + 1,
+            JobsReported:
+              (jobsExists ? res[obj.NAICSCodeDefinition].JobsReported : 0) +
+              parseInt(obj.JobsReported),
+            NAICSCode: obj.NAICSCode,
+          };
+          return res;
+        }, {});
+        let data = Object.entries(groupedArr);
+        data.forEach((elem) => {
+          elem[1].LoanAmount = elem[1].LoanAmount / elem[1].Count;
+          elem[1].JobsReported = elem[1].JobsReported / elem[1].Count;
+        });
+        chart("#content", data);
       });
     </script>
   </body>

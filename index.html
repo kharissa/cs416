@@ -3,7 +3,6 @@
   <head>
     <title>Hawaii PPP Loan Data</title>
     <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3-array@3"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -38,15 +37,19 @@
     </div>
     <script>
       d3.csv("https://kharissa.github.io/cs416/data.csv", function (csvData) {
-        var dataset = [];
-        let sumData = d3.rollups(
-          csvData,
-          (v) => d3.sum(v, (d) => d.LoanAmount),
-          (d) => d.NAICSCodeDefinition
-        );
-        let sortedData = sumData.sort(function (a, b) {
+        let groupedArr = csvData.reduce((result, current) => {
+          let code = current.NAICSCodeDefinition;
+          if (!result[code]) {
+            result[code] = 0;
+          }
+          result[code] += parseInt(current.LoanAmount);
+          return result;
+        }, {});
+
+        let sortedData = Object.entries(groupedArr).sort(function (a, b) {
           return b[1] - a[1];
         });
+        let dataset = [];
         let data = sortedData.slice(0, 30);
         let remaining = sortedData.slice(30);
         const remainingSum = remaining.reduce((sum, li) => sum + li[1], 0);
@@ -62,9 +65,9 @@
         });
 
         var width = 1250;
-        var height = 800;
+        var height = 700;
         var radius = Math.min(width, height) / 3;
-        var legendRectSize = 17;
+        var legendRectSize = 16;
         var legendSpacing = 6;
 
         var color = d3.scaleOrdinal(d3.schemeCategory20c);
@@ -113,7 +116,7 @@
           .each(function (d) {
             this._current - d;
           });
-          
+
         path.on("mouseover", function (d) {
           var total = d3.sum(
             dataset.map(function (d) {

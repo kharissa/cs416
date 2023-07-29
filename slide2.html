@@ -3,7 +3,6 @@
   <head>
     <title>Hawaii PPP Loan Data</title>
     <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3-array@3"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -52,7 +51,7 @@
         const xScale = d3
           .scaleLinear()
           .range([0, width - margin.left - 150])
-          .domain([0, d3.max(data, (d) => d[1])]);
+          .domain([0, d3.max(data, (d) => d[1].LoanAmount)]);
 
         const yScale = d3
           .scaleBand()
@@ -60,12 +59,13 @@
           .domain(data.map((d) => d[0]));
 
         var color = d3.scaleOrdinal(d3.schemeCategory20c);
-        
+
         var tooltip = d3
           .select("#content")
           .append("div")
           .attr("class", "tooltip");
         tooltip.append("div").attr("class", "percent");
+        tooltip.append("div").attr("class", "count");
 
         const yAxis = chart
           .append("g")
@@ -80,16 +80,17 @@
           .attr("class", "bar")
           .attr("fill", (d) => color(d[0]))
           .attr("height", barHeight)
-          .attr("width", (d) => xScale(d[1]))
+          .attr("width", (d) => xScale(d[1].LoanAmount))
           .attr("x", margin.left + 1)
           .attr("y", (d) => yScale(d[0]) + barHeight / 2);
 
         bar.on("mouseover", function (d) {
-          var total_avg = data[data.length - 1][1];
-          var percentage = (d[1] / total_avg) * 100;
+          var total_avg = data[data.length - 1][1].LoanAmount;
+          var percentage = (d[1].LoanAmount / total_avg) * 100;
+          tooltip.select(".count").html(`${d[1].Count} loan records`);
           tooltip
             .select(".percent")
-            .html(`+${percentage.toFixed(2)}% over total average`);
+            .html(`+${percentage.toFixed(2)}% over average`);
           tooltip.style("display", "block");
         });
 
@@ -110,12 +111,12 @@
           .append("text")
           .attr("class", "label")
           .attr("alignment-baseline", "middle")
-          .attr("x", (d) => xScale(d[1]) + margin.left + 5)
+          .attr("x", (d) => xScale(d[1].LoanAmount) + margin.left + 5)
           .attr("y", (d) => yScale(d[0]) + barHeight)
           .style("font-size", "10px")
           .style("font-weight", "bold")
           .text((d) =>
-            d[1].toLocaleString("en-US", {
+            d[1].LoanAmount.toLocaleString("en-US", {
               style: "currency",
               currency: "USD",
               maximumFractionDigits: 0,
@@ -126,18 +127,45 @@
       };
 
       d3.csv("https://kharissa.github.io/cs416/data.csv", function (csvData) {
-        let sumData = d3.rollups(
-          csvData,
-          (v) => d3.mean(v, (d) => d.LoanAmount),
-          (d) => d.NAICSCodeDefinition
-        );
-        let sortedData = sumData.sort(function (a, b) {
-          return b[1] - a[1];
+        let groupedArr = csvData.reduce((res, obj) => {
+          let codeExists = obj.NAICSCodeDefinition in res;
+          let amountExists = codeExists
+            ? "LoanAmount" in res[obj.NAICSCodeDefinition]
+            : false;
+          let countExists = codeExists
+            ? "Count" in res[obj.NAICSCodeDefinition]
+            : false;
+
+          res[obj.NAICSCodeDefinition] = {
+            LoanAmount:
+              (amountExists ? res[obj.NAICSCodeDefinition].LoanAmount : 0) +
+              parseInt(obj.LoanAmount),
+            Count: (countExists ? res[obj.NAICSCodeDefinition].Count : 0) + 1,
+          };
+          return res;
+        }, {});
+
+        let sortedData = Object.entries(groupedArr).sort(function (a, b) {
+          return b[1].LoanAmount / b[1].Count - a[1].LoanAmount / a[1].Count;
         });
+
         let data = sortedData.slice(0, 30);
+
         const remainingSum =
-          sortedData.reduce((sum, li) => sum + li[1], 0) / sortedData.length;
-        data.push(["All Categories", remainingSum]);
+          sortedData.reduce(
+            (sum, li) => sum + li[1].LoanAmount / li[1].Count,
+            0
+          ) / sortedData.length;
+
+        data.forEach((elem) => {
+          elem[1].LoanAmount = elem[1].LoanAmount / elem[1].Count;
+        });
+
+        data.push([
+          "All Categories",
+          { LoanAmount: remainingSum, Count: sortedData.length },
+        ]);
+
         barChart("#content", data);
       });
     </script>
