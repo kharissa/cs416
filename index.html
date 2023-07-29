@@ -3,7 +3,7 @@
   <head>
     <title>PPP Loans for Businesses in Hawaii</title>
     <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script src="d3-annotation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -33,7 +33,7 @@
         </div>
       </div>
       <div id="content">
-        <h4>Top 30 Business Categories by Total Amount Received</h4>
+        <h4>Top 30 Business Categories by Total Amount Approved</h4>
       </div>
     </div>
     <script>
@@ -210,6 +210,41 @@
           .text(function (d) {
             return d;
           });
+
+        const type = d3.annotationCustomType(d3.annotationLabel, {
+          className: "custom",
+          note: { align: "middle", lineType: "vertical" },
+        });
+
+        const annotations = [
+          {
+            note: {
+              label:
+                "They received the most PPP loan funding, taking 20% of total amount approved.",
+              title: "d3.annotationCalloutCircle",
+              title: "Restaurants and medical offices on top",
+            },
+            subject: { radius: 50, radiusPadding: 10 },
+            data: { NAICSCodeDefinition: "Full-Service Restaurants" },
+            className: "show-bg",
+            dy: -10,
+            dx: -125,
+            x: 350,
+            y: 100,
+          },
+        ];
+
+        const makeAnnotations = d3
+          .annotation()
+          .editMode(true)
+          .notePadding(15)
+          .type(type)
+          .annotations(annotations);
+
+        d3.select("svg")
+          .append("g")
+          .attr("class", "annotation-group")
+          .call(makeAnnotations);
       });
     </script>
   </body>
