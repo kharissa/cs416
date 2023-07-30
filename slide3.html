@@ -41,6 +41,7 @@
     </div>
     <script>
       const chart = (selector, data) => {
+
         const container = d3.select(selector);
         const marginTop = 25;
         const marginRight = 70;
@@ -91,16 +92,18 @@
         svg
           .append("text")
           .attr("text-anchor", "end")
-          .attr("x", width)
-          .attr("y", height + marginTop + 20)
+          .attr("x", 425)
+          .attr("y", 415)
+          .attr("class", "axisText")
           .text("Average Loan Amount");
 
         svg
           .append("text")
           .attr("text-anchor", "end")
           .attr("transform", "rotate(-90)")
-          .attr("y", -marginLeft + 20)
-          .attr("x", -marginTop)
+          .attr("y", 30)
+          .attr("x", -150)
+          .attr("class", "axisText")
           .text("Average Jobs Reported");
 
         svg
@@ -151,6 +154,53 @@
               .style("top", d3.event.layerY + 10 + "px")
               .style("left", d3.event.layerX + 10 + "px");
           });
+
+        const makeAnnotations = d3.annotation().annotations([
+          {
+            note: {
+              label: "Loans retained 29 jobs on average",
+              title: "Temporary Help Services",
+            },
+            data: {
+              NAICSCodeDefinition: "Temporary Help Services",
+            },
+            dy: 0,
+            dx: 20,
+            x: 360,
+            y: 35,
+          },
+          {
+            note: {
+              label: "Received the most loan funding, loans retained 9 jobs on average",
+              title: "Restaurants",
+            },
+            data: {
+              NAICSCodeDefinition: "Full-Service Restaurants",
+            },
+            dy: -40,
+            dx: -50,
+            x: 280,
+            y: 260,
+          },
+          {
+            note: {
+              label: "Highest average loan amounts also had higher than average retained jobs",
+              title: "Manufacturing",
+            },
+            data: {
+              NAICSCodeDefinition: "Manufacturing",
+            },
+            dy: -30,
+            dx: -10,
+            x: 680,
+            y: 135,
+          },
+        ]);
+
+        d3.select("svg")
+          .append("g")
+          .attr("class", "annotation-group")
+          .call(makeAnnotations);
       };
 
       d3.csv("https://kharissa.github.io/cs416/data.csv", function (csvData) {

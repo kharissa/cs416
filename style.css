@@ -78,3 +78,7 @@ rect.disabled {
 .legend {
   font-size: 13px;
 }
+
+.axisText {
+  font-size: 11px;
+}
